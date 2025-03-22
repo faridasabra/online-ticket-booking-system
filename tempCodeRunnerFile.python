@@ -1,0 +1,54 @@
+import simpy
+import numpy as np
+import matplotlib.pyplot as plt
+
+ARRIVAL_RATE = 2.5  # 500 users/200 seconds = 2.5 requests/second
+SERVICE_TIME = 0.2  # 200ms/1000 = 0.2
+SIMULATION_TIME = 100
+
+class TicketBookingSystem:
+    def __init__(self, env, num_servers):
+        self.env = env
+        self.server = simpy.Resource(env, num_servers)
+        self.response_times = []
+
+    def process_request(self, request_id):
+        arrival_time = self.env.now
+        with self.server.request() as request:
+            yield request
+            yield self.env.timeout(SERVICE_TIME)
+        response_time = self.env.now - arrival_time
+        self.response_times.append(response_time)
+
+def generate_requests(env, system):
+    request_id = 0
+    while True:
+        yield env.timeout(np.random.exponential(1 /arrival_rate))  # Poisson arrivals
+        env.process(system.process_request(request_id))
+        request_id += 1
+
+def run_simulation(num_servers):
+    env = simpy.Environment()
+    system = TicketBookingSystem(env, num_servers)
+    env.process(generate_requests(env, system))
+    env.run(until=SIMULATION_TIME)
+    return system.response_times
+
+# Experiment with different numbers of servers
+server_counts = [1, 2, 4, 8, 16]
+results = {}
+
+for servers in server_counts:
+    response_times = run_simulation(servers)
+    results[servers] = np.mean(response_times)
+
+# Plot results
+plt.figure(figsize=(8, 5))
+plt.plot(server_counts, list(results.values()), marker='o', linestyle='-')
+plt.xlabel("Number of Servers")
+plt.ylabel("Average Response Time (seconds)")
+plt.title("Performance Analysis of Ticket Booking System")
+plt.axhline(y=0.5, color='r', linestyle='--', label="500ms Threshold")
+plt.legend()
+plt.grid()
+plt.show()
