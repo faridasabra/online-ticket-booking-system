@@ -17,21 +17,6 @@ This project simulates a **ticket booking system** using **SimPy**, a process-ba
 - **NumPy** (Statistical calculations)
 - **Matplotlib** (Plotting results & generating table PNG)
 
-## Installation
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/your-repo/ticket-booking-simulation.git
-   cd ticket-booking-simulation
-   ```
-2. **Install dependencies:**
-   ```sh
-   pip install simpy numpy matplotlib
-   ```
-3. **Run the simulation:**
-   ```sh
-   python simulation.py
-   ```
-
 ## How It Works
 ### 1. Request Generation
 The system generates ticket requests at a rate of **2.5 requests per second** using an **exponential distribution**.
@@ -63,9 +48,4 @@ The system generates ticket requests at a rate of **2.5 requests per second** us
 - Extend simulation with **database query delays**.
 
 ## License
-This project is licensed under the MIT License. Feel free to use and modify it!
-
-## Author
-[Your Name] - [GitHub Profile](https://github.com/your-profile)
-
-
+This project is licensed under the MIT License. 
