@@ -9,16 +9,16 @@ dropped_threshold = 0.5
 
 class TicketBookingSystem:
     def __init__(self, env, num_servers):
-        self.env = env
-        self.server = simpy.Resource(env, num_servers)
-        self.response_times = []
-        self.total_busy_time = 0  
-        self.dropped_requests = 0  
+        self.env = env # simpy environment to manage events
+        self.server = simpy.Resource(env, num_servers) # ticket booking servers
+        self.response_times = [] # stores response time for processed requests
+        self.total_busy_time = 0  # tracks total time servers are busy
+        self.dropped_requests = 0  # counts the number of dropped requests due to long wait time
 
     def process_request(self, request_id):
-        arrival_time = self.env.now  
-        with self.server.request() as request:
-            yield request  
+        arrival_time = self.env.now # records the arrival time of requests
+        with self.server.request() as request: # the request waits in line until a server is available
+            yield request 
             wait_time = self.env.now - arrival_time  
 
             if wait_time > dropped_threshold:
@@ -52,7 +52,7 @@ def run_simulation(num_servers):
         "dropped_requests": system.dropped_requests
     }
 
-server_counts = [1, 2, 3, 5, 13]
+server_counts = [1, 2, 3, 5, 8]
 results = {}
 
 for servers in server_counts:
