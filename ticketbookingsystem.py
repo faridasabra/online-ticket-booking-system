@@ -2,7 +2,6 @@ import simpy
 import numpy as np
 import pandas as pd
 
-# Define basic parameters
 service_time = 0.2
 simulation_time = 100
 total_requests = 1000
@@ -20,7 +19,7 @@ class TicketBookingSystem:
         self.total_processed = 0
         self.dropped_requests = 0
         self.queue_lengths = []
-        self.idle_time = [0] * num_servers  # Track idle times per server
+        self.idle_time = [0] * num_servers
         self.env.process(self.monitor_queue())
 
     def monitor_queue(self):
@@ -31,8 +30,6 @@ class TicketBookingSystem:
     def process_request(self, request_id):
         arrival = self.env.now
         queue_length_at_arrival = len(self.server.queue)
-
-        # Check if any server is busy
         server_status = "busy" if any(self.server_busy) else "not busy"
 
         with self.server.request() as req:
@@ -53,41 +50,32 @@ class TicketBookingSystem:
                 })
                 return
 
-            # Start processing the request
             start_service = self.env.now
             queue_time = start_service - arrival
 
-            # Find the first available server and mark it as busy
             for i in range(len(self.server_busy)):
                 if not self.server_busy[i]:
-                    # Add idle time before the service starts
                     if self.last_service_end[i] < start_service:
                         self.idle_time[i] += start_service - self.last_service_end[i]
-                    self.server_busy[i] = True  # Mark this server as busy
-                    self.last_service_end[i] = start_service  # Update the time when this server starts serving
+                    self.server_busy[i] = True
+                    self.last_service_end[i] = start_service
                     break
 
-            # Process the request for the specified service time
             yield self.env.timeout(service_time)
             end_service = self.env.now
 
             self.total_processed += 1
             self.total_busy_time += service_time
 
-            # Once the service is complete, mark the server as idle
             for i in range(len(self.server_busy)):
-                if self.server_busy[i]:  # Find the busy server
-                    self.server_busy[i] = False  # Mark the server as idle
-                    self.last_service_end[i] = end_service  # Update the time when this server becomes idle
+                if self.server_busy[i]:
+                    self.server_busy[i] = False
+                    self.last_service_end[i] = end_service
                     break
 
-            # Calculate the total time spent (start_time + end_time)
-            total_time_spent = end_service - start_service  # Correcting the calculation
-
-            # Calculate the server status after the request
+            total_time_spent = end_service - start_service
             server_status = "busy" if any(self.server_busy) else "not busy"
 
-            # Log the customer details
             self.customers.append({
                 "Customer ID": request_id,
                 "Arrival time": arrival,
@@ -103,14 +91,10 @@ class TicketBookingSystem:
 
     def generate_requests(self, user_count):
         arrival_rate = user_count / simulation_time
-        # First customer arrives at time 0
         self.env.process(self.process_request(0))
-    
-        # For subsequent customers, generate random inter-arrival times
         for i in range(1, total_requests):
             yield self.env.timeout(np.random.exponential(1 / arrival_rate))
             self.env.process(self.process_request(i))
-
 
 def run_simulation():
     env = simpy.Environment()
@@ -119,11 +103,8 @@ def run_simulation():
     env.run(until=simulation_time)
 
     df = pd.DataFrame(system.customers)
+    df.fillna(0, inplace=True)
 
-    # Handling potential NaN values before metrics calculations
-    df.fillna(0, inplace=True)  # Filling NaN with 0 for calculations
-
-    # Metrics
     served = df[~df['Dropped']]
     avg_response_time = served['Total time spent'].mean()
     avg_wait_time = served['Queue time'].mean()
@@ -148,16 +129,14 @@ def run_simulation():
 
     return df, metrics
 
-# Run the simulation
 customer_table, sim_metrics = run_simulation()
 
-# Save to TXT
 with open("customer_table.txt", "w", encoding="utf-8") as f:
     f.write("=== Customer Table ===\n\n")
     f.write(customer_table.to_string(index=False))
 
 print("Customer Table (first 10 rows):")
-print(customer_table.head(10))  # Display first 10 rows in console
+print(customer_table.head(10))
 
 print("\nSimulation Metrics (in Minutes):")
 for key, value in sim_metrics.items():
